@@ -1,0 +1,164 @@
+trigger:
+- main
+
+pool:
+  vmImage: 'windows-latest'
+
+variables:
+  buildConfiguration: 'Release'
+  azureSubscription: 'MyAzureConnection'
+
+stages:
+
+# --------------------------
+# CI Stage: Build All Services
+# --------------------------
+- stage: Build
+  jobs:
+  - job: BuildServices
+    steps:
+    - task: UseDotNet@2
+      inputs:
+        packageType: 'sdk'
+        version: '8.0.x'
+
+    # ProductService
+    - task: DotNetCoreCLI@2
+      displayName: Restore ProductService
+      inputs:
+        command: 'restore'
+        projects: 'ProductService/ProductService.csproj'
+
+    - task: DotNetCoreCLI@2
+      displayName: Build ProductService
+      inputs:
+        command: 'build'
+        projects: 'ProductService/ProductService.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: Publish ProductService
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'ProductService/ProductService.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/ProductService'
+        zipAfterPublish: true
+
+    # OrderService
+    - task: DotNetCoreCLI@2
+      displayName: Restore OrderService
+      inputs:
+        command: 'restore'
+        projects: 'OrderService/OrderService.csproj'
+
+    - task: DotNetCoreCLI@2
+      displayName: Build OrderService
+      inputs:
+        command: 'build'
+        projects: 'OrderService/OrderService.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: Publish OrderService
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'OrderService/OrderService.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/OrderService'
+        zipAfterPublish: true
+
+    # APIGateway
+    - task: DotNetCoreCLI@2
+      displayName: Restore APIGateway
+      inputs:
+        command: 'restore'
+        projects: 'APIGateway/APIGateway.csproj'
+
+    - task: DotNetCoreCLI@2
+      displayName: Build APIGateway
+      inputs:
+        command: 'build'
+        projects: 'APIGateway/APIGateway.csproj'
+        arguments: '--configuration $(buildConfiguration)'
+
+    - task: DotNetCoreCLI@2
+      displayName: Publish APIGateway
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: 'APIGateway/APIGateway.csproj'
+        arguments: '--configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/APIGateway'
+        zipAfterPublish: true
+
+    # Publish All Artifacts
+    - task: PublishBuildArtifacts@1
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+
+# --------------------------
+# CD Stage: Deploy ProductService
+# --------------------------
+- stage: Deploy_ProductService
+  dependsOn: Build
+  jobs:
+  - deployment: DeployProductService
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'productservice-app'
+              package: '$(Pipeline.Workspace)/drop/ProductService/*.zip'
+
+# --------------------------
+# CD Stage: Deploy OrderService
+# --------------------------
+- stage: Deploy_OrderService
+  dependsOn: Build
+  jobs:
+  - deployment: DeployOrderService
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'orderservice-app'
+              package: '$(Pipeline.Workspace)/drop/OrderService/*.zip'
+
+# --------------------------
+# CD Stage: Deploy APIGateway
+# --------------------------
+- stage: Deploy_APIGateway
+  dependsOn: Build
+  jobs:
+  - deployment: DeployAPIGateway
+    environment: 'production'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'apigateway-app'
+              package: '$(Pipeline.Workspace)/drop/APIGateway/*.zip'
