@@ -96,6 +96,7 @@ stages:
       inputs:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'drop'
+
 # --------------------------
 # CD Stage: Deploy ProductService
 # --------------------------
@@ -103,7 +104,7 @@ stages:
   dependsOn: Build
   jobs:
   - deployment: DeployProductService
-    environment: 'prod-productservice'
+    environment: 'production'
     strategy:
       runOnce:
         deploy:
@@ -115,7 +116,7 @@ stages:
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: 'webApp'
-              appName: 'productservice-app'
+              appName: 'productservice-appservice'
               package: '$(Pipeline.Workspace)/drop/ProductService/*.zip'
 
 # --------------------------
@@ -125,7 +126,7 @@ stages:
   dependsOn: Build
   jobs:
   - deployment: DeployOrderService
-    environment: 'prod-orderservice'
+    environment: 'production'
     strategy:
       runOnce:
         deploy:
@@ -137,7 +138,7 @@ stages:
             inputs:
               azureSubscription: '$(azureSubscription)'
               appType: 'webApp'
-              appName: 'orderservice-app'
+              appName: 'orderservice-appservice'
               package: '$(Pipeline.Workspace)/drop/OrderService/*.zip'
 
 # --------------------------
@@ -147,7 +148,7 @@ stages:
   dependsOn: Build
   jobs:
   - deployment: DeployAPIGateway
-    environment: 'prod-apigateway'
+    environment: 'production'
     strategy:
       runOnce:
         deploy:
