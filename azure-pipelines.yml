@@ -6,7 +6,7 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
-  azureSubscription: 'MyAzureConnection'
+  azureSubscription: 'MyMicroServiceAzureConnection'
 
 stages:
 
