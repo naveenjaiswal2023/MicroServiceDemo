@@ -97,21 +97,59 @@ stages:
         pathToPublish: '$(Build.ArtifactStagingDirectory)'
         artifactName: 'drop'
 
-# --------------------------
-# CD Stage: Deploy ProductService
-# --------------------------
-- stage: Deploy_ProductService
+
+# --------------------------------------------------
+# CD Stages for ProductService
+# --------------------------------------------------
+- stage: Deploy_Dev_ProductService
   dependsOn: Build
   jobs:
-  - deployment: DeployProductService
-    environment: 'production'
+  - deployment: DeployDevProductService
+    environment: 'dev'
     strategy:
       runOnce:
         deploy:
           steps:
           - download: current
             artifact: drop
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'productservice-api-dev'
+              package: '$(Pipeline.Workspace)/drop/ProductService/*.zip'
 
+- stage: Deploy_QA_ProductService
+  dependsOn: Deploy_Dev_ProductService
+  condition: succeeded()
+  jobs:
+  - deployment: DeployQAProductService
+    environment: 'qa'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'productservice-api-qa'
+              package: '$(Pipeline.Workspace)/drop/ProductService/*.zip'
+
+- stage: Deploy_Prod_ProductService
+  dependsOn: Deploy_QA_ProductService
+  condition: succeeded()
+  jobs:
+  - deployment: DeployProdProductService
+    environment: 'prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
           - task: AzureWebApp@1
             inputs:
               azureSubscription: '$(azureSubscription)'
@@ -119,21 +157,59 @@ stages:
               appName: 'productservice-api'
               package: '$(Pipeline.Workspace)/drop/ProductService/*.zip'
 
-# --------------------------
-# CD Stage: Deploy OrderService
-# --------------------------
-- stage: Deploy_OrderService
+
+# --------------------------------------------------
+# CD Stages for OrderService
+# --------------------------------------------------
+- stage: Deploy_Dev_OrderService
   dependsOn: Build
   jobs:
-  - deployment: DeployOrderService
-    environment: 'production'
+  - deployment: DeployDevOrderService
+    environment: 'dev'
     strategy:
       runOnce:
         deploy:
           steps:
           - download: current
             artifact: drop
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'orderservice-api-dev'
+              package: '$(Pipeline.Workspace)/drop/OrderService/*.zip'
 
+- stage: Deploy_QA_OrderService
+  dependsOn: Deploy_Dev_OrderService
+  condition: succeeded()
+  jobs:
+  - deployment: DeployQAOrderService
+    environment: 'qa'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'orderservice-api-qa'
+              package: '$(Pipeline.Workspace)/drop/OrderService/*.zip'
+
+- stage: Deploy_Prod_OrderService
+  dependsOn: Deploy_QA_OrderService
+  condition: succeeded()
+  jobs:
+  - deployment: DeployProdOrderService
+    environment: 'prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
           - task: AzureWebApp@1
             inputs:
               azureSubscription: '$(azureSubscription)'
@@ -141,21 +217,59 @@ stages:
               appName: 'orderservice-api'
               package: '$(Pipeline.Workspace)/drop/OrderService/*.zip'
 
-# --------------------------
-# CD Stage: Deploy APIGateway
-# --------------------------
-- stage: Deploy_APIGateway
+
+# --------------------------------------------------
+# CD Stages for APIGateway
+# --------------------------------------------------
+- stage: Deploy_Dev_APIGateway
   dependsOn: Build
   jobs:
-  - deployment: DeployAPIGateway
-    environment: 'production'
+  - deployment: DeployDevAPIGateway
+    environment: 'dev'
     strategy:
       runOnce:
         deploy:
           steps:
           - download: current
             artifact: drop
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'apigateway-api-dev'
+              package: '$(Pipeline.Workspace)/drop/APIGateway/*.zip'
 
+- stage: Deploy_QA_APIGateway
+  dependsOn: Deploy_Dev_APIGateway
+  condition: succeeded()
+  jobs:
+  - deployment: DeployQAAPIGateway
+    environment: 'qa'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
+          - task: AzureWebApp@1
+            inputs:
+              azureSubscription: '$(azureSubscription)'
+              appType: 'webApp'
+              appName: 'apigateway-api-qa'
+              package: '$(Pipeline.Workspace)/drop/APIGateway/*.zip'
+
+- stage: Deploy_Prod_APIGateway
+  dependsOn: Deploy_QA_APIGateway
+  condition: succeeded()
+  jobs:
+  - deployment: DeployProdAPIGateway
+    environment: 'prod'
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - download: current
+            artifact: drop
           - task: AzureWebApp@1
             inputs:
               azureSubscription: '$(azureSubscription)'
